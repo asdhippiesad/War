@@ -65,8 +65,6 @@ namespace HomeWork2
 
         public virtual List<SoldierFactory> GetSoldier() 
         {
-            SoldierFactory soldier = new SoldierFactory();
-            soldier.CreateMedic();
             return _soldiers;
         }
     }
@@ -86,7 +84,9 @@ namespace HomeWork2
 
         public override List<SoldierFactory> GetSoldier()
         {
-            return base.GetSoldier();
+            SoldierFactory soldierFactory = new SoldierFactory();
+            soldierFactory.CreateMedic();
+            return _soldiers;
         }
     }
 
@@ -105,7 +105,9 @@ namespace HomeWork2
 
         public override List<SoldierFactory> GetSoldier()
         {
-            return base.GetSoldier();
+            SoldierFactory soldier = new SoldierFactory();
+            soldier.CreateSoldier();
+            return _soldires;
         }
     }
 
