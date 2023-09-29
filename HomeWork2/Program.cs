@@ -30,6 +30,8 @@ namespace HomeWork2
 
     class Battlefield
     {
+        private List<Soldier> _soldiers = new List<Soldier>();
+
         private Squad _squadOne = new Squad();
         private Squad _squadTwo = new Squad();
 
@@ -38,7 +40,7 @@ namespace HomeWork2
             Soldier _firstSoldier = _squadOne.GetRandomSoldier();
             Soldier _secondSoldier = _squadTwo.GetRandomSoldier();
 
-            while (_firstSoldier != null && _secondSoldier != null)
+            while (_firstSoldier.isAlive && _secondSoldier.isAlive)
             {
                 _firstSoldier.UseSpecialAttack(_secondSoldier);
                 _secondSoldier.UseSpecialAttack(_firstSoldier);
@@ -51,8 +53,32 @@ namespace HomeWork2
 
                 _firstSoldier.UseSpecialAttack(_secondSoldier);
                 _secondSoldier.UseSpecialAttack(_firstSoldier);
-            }
 
+                _squadOne.RemoveSoldiers(_firstSoldier);
+                _squadTwo.RemoveSoldiers(_secondSoldier);
+
+                ShowBattleResult();
+            }
+        }
+
+        public void ShowBattleResult()
+        {
+            string _countryOne = "CountyOne";
+            string _countryTwo = "CountryTwo";
+
+            if (_squadOne.GetTotalHealth() > _squadTwo.GetTotalHealth())
+            {
+                Console.WriteLine($"{_countryOne} -- Победила.");
+            }
+            else if (_squadOne.GetTotalHealth() < _squadTwo.GetTotalHealth())
+            {
+
+                Console.WriteLine($"{_countryTwo} -- Победила.");
+            }
+            else
+            {
+                Console.WriteLine("fff");
+            }
         }
     }
 
@@ -102,17 +128,38 @@ namespace HomeWork2
     class Squad
     {
         private List<Soldier> _soldiers = new List<Soldier>();
+        private SoldierFactory _soldierFactory = new SoldierFactory();
 
-        public void RemoveSoldiers(Soldier soldier)
+        public Squad()
         {
-            _soldiers.Remove(soldier);
+            _soldiers.AddRange(_soldierFactory.CreateArcher());
+            _soldiers.AddRange(_soldierFactory.CreateMedic(this));
+        }
+
+        public int GetTotalHealth()
+        {
+            int totalHealth = 0;
+
+            foreach (Soldier soldier in _soldiers)
+                totalHealth += soldier.Health;
+
+            return totalHealth;
+        }
+
+        public void RemoveSoldiers(Soldier soldiers)
+        {
+            _soldiers.RemoveAll(soldier => soldier.Health == 0);
+            Console.WriteLine($"{_soldiers.Count} -- выбыло солдат.");
         }
 
         public void ShowSoldiers()
         {
+            int soldierCount = 0;
+
             foreach (Soldier soldier in _soldiers)
             {
-                Console.WriteLine($"Здоровье -- {soldier.Health}." +
+                soldierCount++;
+                Console.WriteLine($"Здоровье -- {soldier.Health}.\n" +
                                   $"Атака -- {soldier.SpecialAttack}");
             }
         }
@@ -167,13 +214,10 @@ namespace HomeWork2
 
     class Medic : Soldier
     {
-        private SoldierFactory _soldierFactory = new SoldierFactory();
-        private List<Soldier> _soldiers = new List<Soldier>();
         private Squad _squad;
 
         public Medic(int health, int damage, int quanity, Squad squad) : base(health, damage)
         {
-            _soldiers = _soldierFactory.CreateMedic(squad);
             _squad = squad;
         }
 
@@ -198,13 +242,8 @@ namespace HomeWork2
 
     class Archer : Soldier
     {
-        private SoldierFactory _soldierFactory = new SoldierFactory();
-        private List<Soldier> _solsdiers = new List<Soldier>();
 
-        public Archer(int health, int damage, int quanity) : base(health, damage)
-        {
-            _solsdiers = _soldierFactory.CreateArcher();
-        }
+        public Archer(int health, int damage, int quanity) : base(health, damage) { }
 
         public int LongRangeShot { get; private set; } = 140;
 
