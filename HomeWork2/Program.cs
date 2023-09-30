@@ -113,8 +113,7 @@ namespace HomeWork2
 
         public List<Soldier> CreateMedic()
         {
-            int minSwordsman = 5;
-            int maxSwordsman = 50;
+            int swordsmanCount = 5;
 
             int minDamage = 5;
             int maxDamage = 80;
@@ -125,17 +124,16 @@ namespace HomeWork2
 
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
-            int SwordsmanSkill = RandomGenerator.Next(minSwordsman, maxSwordsman);
+            int SwordsmanSkill = RandomGenerator.Next(swordsmanCount);
 
-            _soldiers.Add(new Swordsman(health, damage, SwordsmanSkill, name));
+            _soldiers.Add(new Swordsman(health, damage, swordsmanCount, name));
 
             return _soldiers;
         }
 
         public List<Soldier> CreateArcher()
         {
-            int minArcher = 10;
-            int maxArcher = 90;
+            int archerCount = 5;
 
             int minDamage = 10;
             int maxDamage = 90;
@@ -146,9 +144,9 @@ namespace HomeWork2
 
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
-            int archerSkill = RandomGenerator.Next(minArcher, maxArcher);
+            int archerSkill = RandomGenerator.Next(archerCount);
 
-            _soldiers.Add(new Archer(health, damage, archerSkill, name));
+            _soldiers.Add(new Archer(health, damage, archerCount, name));
 
             return _soldiers;
         }
@@ -157,6 +155,7 @@ namespace HomeWork2
     class Squad
     {
         private List<Soldier> _soldiers = new List<Soldier>();
+
         private SoldierFactory _soldierFactory = new SoldierFactory();
 
         private int _soldiersOutCoint = 0;
@@ -179,12 +178,24 @@ namespace HomeWork2
 
         public void RemoveSoldiers()
         {
-            _soldiers.RemoveAll(soldier => !soldier.isAlive);
+            List<Soldier> removeToSoldiers = new List<Soldier>();
 
-            int fallenSoldiers = _soldiersOutCoint;
-            _soldiersOutCoint += fallenSoldiers;
+            foreach (Soldier soldiers in _soldiers)
+            {
+                if (!soldiers.isAlive)
+                {
+                    removeToSoldiers.Add(soldiers);
+                }
+            }
 
-            Console.WriteLine($"{_soldiers.Count} -- Fallen soldiers: {fallenSoldiers}");
+            _soldiersOutCoint = removeToSoldiers.Count;
+
+            foreach (Soldier soldier in removeToSoldiers)
+            {
+                _soldiers.Remove(soldier);
+            }
+
+            Console.WriteLine($"Fallen soldiers: {removeToSoldiers.Count}. Remaining soldiers: {_soldiers.Count}.");
 
         }
 
@@ -195,9 +206,9 @@ namespace HomeWork2
             foreach (Soldier soldier in _soldiers)
             {
                 soldierCount++;
-                Console.WriteLine($"Health -- {soldier.Health}.\n" +
-                                  $"Attack -- {soldier.Damage}\n" +
-                                  $"Name -- {soldier.Name}");
+                Console.WriteLine($"Health -- {soldier.Health}.\t" +
+                                  $"Attack -- {soldier.Damage}.\t" +
+                                  $"Name -- {soldier.Name}.\t");
             }
         }
 
