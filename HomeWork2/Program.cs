@@ -42,38 +42,32 @@ namespace HomeWork2
 
             while (_firstSoldier.isAlive && _secondSoldier.isAlive)
             {
-                _firstSoldier.UseSpecialAttack(_secondSoldier);
-                _secondSoldier.UseSpecialAttack(_firstSoldier);
-
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
 
                 _firstSoldier.TakeDamage(_secondSoldier.Damage);
                 _secondSoldier.TakeDamage(_firstSoldier.Damage);
 
-                _firstSoldier.UseSpecialAttack(_secondSoldier);
-                _secondSoldier.UseSpecialAttack(_firstSoldier);
-
-                _squadOne.RemoveSoldiers(_firstSoldier);
-                _squadTwo.RemoveSoldiers(_secondSoldier);
-
-                ShowBattleResult();
+                _squadOne.RemoveSoldiers();
+                _squadTwo.RemoveSoldiers();
             }
+
+            ShowBattleResult();
         }
 
         public void ShowBattleResult()
         {
             string _countryOne = "CountyOne";
-            string _countryTwo = "CountryTwo";
+            string _countryTwo = "CountryTwo"; 
 
             if (_squadOne.GetTotalHealth() > _squadTwo.GetTotalHealth())
             {
-                Console.WriteLine($"{_countryOne} -- Победила.");
+                Console.WriteLine($"{_countryOne} -- The first country has won.");
             }
             else if (_squadOne.GetTotalHealth() < _squadTwo.GetTotalHealth())
             {
 
-                Console.WriteLine($"{_countryTwo} -- Победила.");
+                Console.WriteLine($"{_countryTwo} -- The second country has won.");
             }
             else
             {
@@ -98,8 +92,8 @@ namespace HomeWork2
 
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
-
             int medicSkill = RandomGenerator.Next(minMedic, maxMedic);
+
             _soldiers.Add(new Medic(health, damage, medicSkill, squad));
 
             return _soldiers;
@@ -117,8 +111,8 @@ namespace HomeWork2
 
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
-
             int archerSkill = RandomGenerator.Next(minArcher, maxArcher);
+
             _soldiers.Add(new Archer(health, damage, archerSkill));
 
             return _soldiers;
@@ -129,6 +123,8 @@ namespace HomeWork2
     {
         private List<Soldier> _soldiers = new List<Soldier>();
         private SoldierFactory _soldierFactory = new SoldierFactory();
+
+        private int _soldiersOutCoint = 0;
 
         public Squad()
         {
@@ -146,10 +142,15 @@ namespace HomeWork2
             return totalHealth;
         }
 
-        public void RemoveSoldiers(Soldier soldiers)
+        public void RemoveSoldiers()
         {
-            _soldiers.RemoveAll(soldier => soldier.Health == 0);
-            Console.WriteLine($"{_soldiers.Count} -- выбыло солдат.");
+            _soldiers.RemoveAll(soldier => !soldier.isAlive);
+
+            int fallenSoldiers = _soldiersOutCoint;
+            _soldiersOutCoint += fallenSoldiers;
+
+            Console.WriteLine($"{_soldiers.Count} -- Fallen soldiers: {fallenSoldiers}");
+
         }
 
         public void ShowSoldiers()
@@ -159,10 +160,11 @@ namespace HomeWork2
             foreach (Soldier soldier in _soldiers)
             {
                 soldierCount++;
-                Console.WriteLine($"Здоровье -- {soldier.Health}.\n" +
-                                  $"Атака -- {soldier.SpecialAttack}");
+                Console.WriteLine($"Health -- {soldier.Health}.\n" +
+                                  $"Attack -- {soldier.SpecialAttack}");
             }
         }
+
 
         public Soldier GetRandomSoldier()
         {
@@ -204,12 +206,6 @@ namespace HomeWork2
                 Health -= damage;
             return Damage;
         }
-
-        public virtual int UseSpecialAttack(Soldier opponent)
-        {
-            opponent.TakeDamage(Damage);
-            return SpecialAttack;
-        }
     }
 
     class Medic : Soldier
@@ -223,17 +219,6 @@ namespace HomeWork2
 
         public int Healing { get; private set; } = 50;
 
-        public override int UseSpecialAttack(Soldier soldier)
-        {
-            if (_squad.Contains(soldier))
-            {
-                int healAmount = Healing;
-                soldier.Health += healAmount;
-            }
-
-            return Healing;
-        }
-
         public override int TakeDamage(int damage)
         {
             return base.TakeDamage(damage);
@@ -242,15 +227,9 @@ namespace HomeWork2
 
     class Archer : Soldier
     {
-
         public Archer(int health, int damage, int quanity) : base(health, damage) { }
 
         public int LongRangeShot { get; private set; } = 140;
-
-        public override int UseSpecialAttack(Soldier soldier)
-        {
-            return LongRangeShot;
-        }
 
         public override int TakeDamage(int damage)
         {
