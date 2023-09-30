@@ -45,8 +45,11 @@ namespace HomeWork2
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
 
-                _firstSoldier.TakeDamage(_secondSoldier.Damage);
-                _secondSoldier.TakeDamage(_firstSoldier.Damage);
+                int damageByFirstSoldier = _firstSoldier.TakeDamage(_secondSoldier.Damage);
+                int damageBySecondSoldier = _secondSoldier.TakeDamage(_firstSoldier.Damage);
+
+                Console.WriteLine($"First Soldier dealt {damageByFirstSoldier} damage.");
+                Console.WriteLine($"Second Soldier dealt {damageBySecondSoldier} damage.");
 
                 _squadOne.RemoveSoldiers();
                 _squadTwo.RemoveSoldiers();
@@ -55,10 +58,10 @@ namespace HomeWork2
             ShowBattleResult();
         }
 
-        public void ShowBattleResult()
+        private void ShowBattleResult()
         {
             string _countryOne = "CountyOne";
-            string _countryTwo = "CountryTwo"; 
+            string _countryTwo = "CountryTwo";
 
             if (_squadOne.GetTotalHealth() > _squadTwo.GetTotalHealth())
             {
@@ -76,25 +79,55 @@ namespace HomeWork2
         }
     }
 
+    class Soldier
+    {
+        private List<SoldierFactory> _soldiers = new List<SoldierFactory>();
+
+        public Soldier(int health, int damage, string name)
+        {
+            Health = health;
+            Damage = damage;
+            Name = name;
+        }
+
+        public int Health { get; set; }
+        public int Damage { get; protected set; }
+        public string Name { get; protected set; }
+        public bool isAlive => Health > 0;
+
+        public virtual int TakeDamage(int damage)
+        {
+            if (isAlive)
+            {
+                Health -= damage;
+                return Damage;
+            }
+
+            return 0;
+        }
+    }
+
     class SoldierFactory
     {
         private List<Soldier> _soldiers = new List<Soldier>();
 
-        public List<Soldier> CreateMedic(Squad squad)
+        public List<Soldier> CreateMedic()
         {
-            int minMedic = 5;
-            int maxMedic = 50;
+            int minSwordsman = 5;
+            int maxSwordsman = 50;
 
             int minDamage = 5;
             int maxDamage = 80;
 
             int maxHealth = 800;
 
+            string name = "Swordsman";
+
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
-            int medicSkill = RandomGenerator.Next(minMedic, maxMedic);
+            int SwordsmanSkill = RandomGenerator.Next(minSwordsman, maxSwordsman);
 
-            _soldiers.Add(new Medic(health, damage, medicSkill, squad));
+            _soldiers.Add(new Swordsman(health, damage, SwordsmanSkill, name));
 
             return _soldiers;
         }
@@ -109,11 +142,13 @@ namespace HomeWork2
 
             int maxHealth = 900;
 
+            string name = "Archer";
+
             int damage = RandomGenerator.Next(minDamage, maxDamage);
             int health = RandomGenerator.Next(maxHealth);
             int archerSkill = RandomGenerator.Next(minArcher, maxArcher);
 
-            _soldiers.Add(new Archer(health, damage, archerSkill));
+            _soldiers.Add(new Archer(health, damage, archerSkill, name));
 
             return _soldiers;
         }
@@ -129,7 +164,7 @@ namespace HomeWork2
         public Squad()
         {
             _soldiers.AddRange(_soldierFactory.CreateArcher());
-            _soldiers.AddRange(_soldierFactory.CreateMedic(this));
+            _soldiers.AddRange(_soldierFactory.CreateMedic());
         }
 
         public int GetTotalHealth()
@@ -161,10 +196,10 @@ namespace HomeWork2
             {
                 soldierCount++;
                 Console.WriteLine($"Health -- {soldier.Health}.\n" +
-                                  $"Attack -- {soldier.SpecialAttack}");
+                                  $"Attack -- {soldier.Damage}\n" +
+                                  $"Name -- {soldier.Name}");
             }
         }
-
 
         public Soldier GetRandomSoldier()
         {
@@ -178,46 +213,11 @@ namespace HomeWork2
             _soldiers.RemoveAt(index);
             return soldier;
         }
-
-        public bool Contains(Soldier soldier)
-        {
-            return _soldiers.Contains(soldier);
-        }
     }
 
-    class Soldier
+    class Swordsman : Soldier
     {
-        private List<SoldierFactory> _soldiers = new List<SoldierFactory>();
-
-        public Soldier(int health, int damage)
-        {
-            Health = health;
-            Damage = damage;
-        }
-
-        public int Health { get; set; }
-        public int Damage { get; protected set; }
-        public int SpecialAttack => Damage;
-        public bool isAlive => Health > 0;
-
-        public virtual int TakeDamage(int damage)
-        {
-            if (isAlive)
-                Health -= damage;
-            return Damage;
-        }
-    }
-
-    class Medic : Soldier
-    {
-        private Squad _squad;
-
-        public Medic(int health, int damage, int quanity, Squad squad) : base(health, damage)
-        {
-            _squad = squad;
-        }
-
-        public int Healing { get; private set; } = 50;
+        public Swordsman(int health, int damage, int quanity, string name) : base(health, damage, name) { }
 
         public override int TakeDamage(int damage)
         {
@@ -227,9 +227,7 @@ namespace HomeWork2
 
     class Archer : Soldier
     {
-        public Archer(int health, int damage, int quanity) : base(health, damage) { }
-
-        public int LongRangeShot { get; private set; } = 140;
+        public Archer(int health, int damage, int quanity, string name) : base(health, damage, name) { }
 
         public override int TakeDamage(int damage)
         {
