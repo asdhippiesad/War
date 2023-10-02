@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace HomeWork2
 {
@@ -30,29 +29,24 @@ namespace HomeWork2
 
     class Battlefield
     {
-        private List<Soldier> _soldiers = new List<Soldier>();
-
-        private Squad _squadOne = new Squad();
-        private Squad _squadTwo = new Squad();
+        private Squad _squadOne = new Squad("Country One");
+        private Squad _squadTwo = new Squad("Country Two");
 
         public void Field()
         {
-            Soldier _firstSoldier = _squadOne.GetRandomSoldier();
-            Soldier _secondSoldier = _squadTwo.GetRandomSoldier();
-
-            while (_firstSoldier.isAlive && _secondSoldier.isAlive)
+            while (!_squadOne.IsDefeated() && !_squadTwo.IsDefeated())
             {
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
 
-                int damageByFirstSoldier = _firstSoldier.TakeDamage(_secondSoldier.Damage);
-                int damageBySecondSoldier = _secondSoldier.TakeDamage(_firstSoldier.Damage);
+                int damageByFirstSquad = _squadOne.Attack(_squadTwo);
+                int damageBySecondSquad = _squadTwo.Attack(_squadOne);
 
-                Console.WriteLine($"First Soldier dealt {damageByFirstSoldier} damage.");
-                Console.WriteLine($"Second Soldier dealt {damageBySecondSoldier} damage.");
+                Console.WriteLine($"First Squad dealt {damageByFirstSquad} damage.");
+                Console.WriteLine($"Second Squad dealt {damageBySecondSquad} damage.");
 
-                _squadOne.RemoveSoldiers();
-                _squadTwo.RemoveSoldiers();
+                _squadOne.RemoveDefeatedSoldiers();
+                _squadTwo.RemoveDefeatedSoldiers();
             }
 
             ShowBattleResult();
@@ -60,29 +54,111 @@ namespace HomeWork2
 
         private void ShowBattleResult()
         {
-            string _countryOne = "CountyOne";
-            string _countryTwo = "CountryTwo";
-
-            if (_squadOne.GetTotalHealth() > _squadTwo.GetTotalHealth())
+            if (_squadOne.IsDefeated() && _squadTwo.IsDefeated())
             {
-                Console.WriteLine($"{_countryOne} -- The first country has won.");
+                Console.WriteLine($"The battle ended in a draw.");
             }
-            else if (_squadOne.GetTotalHealth() < _squadTwo.GetTotalHealth())
+            else if (_squadOne.IsDefeated())
             {
-
-                Console.WriteLine($"{_countryTwo} -- The second country has won.");
+                Console.WriteLine($"{_squadOne.NameCountry} -- The first country has lost.");
             }
-            else
+            else if (_squadTwo.IsDefeated())
             {
-                Console.WriteLine("fff");
+                Console.WriteLine($"{_squadTwo.NameCountry} -- The second country has lost.");
+            }
+        }
+    }
+
+    class Squad
+    {
+        private List<Soldier> _soldiers = new List<Soldier>();
+        public string NameCountry { get; private set; }
+
+        public Squad(string nameCountry)
+        {
+            NameCountry = nameCountry;
+            _soldiers.AddRange(CreateSoldiers());
+        }
+
+        private List<Soldier> CreateSoldiers()
+        {
+            SoldierFactory factory = new SoldierFactory();
+            List<Soldier> soldiers = new List<Soldier>();
+
+            int squadSize = 5;
+
+            for (int i = 0; i < squadSize; i++)
+            {
+                soldiers.Add(factory.CreateRandomSoldier());
+            }
+
+            return soldiers;
+        }
+
+        public bool IsDefeated()
+        {
+            foreach (var soldier in _soldiers)
+            {
+                if (soldier.isAlive)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int Attack(Squad enemySquad)
+        {
+            int totalDamage = 0;
+            foreach (Soldier soldier in _soldiers)
+            {
+                if (soldier.isAlive)
+                {
+                    int damage = RandomGenerator.Next(1, soldier.Damage);
+                    enemySquad.TakeDamage(damage);
+                    totalDamage += damage;
+                }
+            }
+            return totalDamage;
+        }
+
+        public void TakeDamage(int damage)
+        {
+            foreach (Soldier soldier in _soldiers)
+            {
+                if (soldier.isAlive)
+                {
+                    soldier.TakeDamage(damage);
+                }
+            }
+        }
+
+        public void RemoveDefeatedSoldiers()
+        {
+            List<Soldier> aliveSoldiers = new List<Soldier>();
+
+            foreach (Soldier soldier in _soldiers)
+            {
+                if (soldier.isAlive)
+                {
+                    aliveSoldiers.Add(soldier);
+                }
+            }
+            _soldiers = aliveSoldiers;
+        }
+
+        public void ShowSoldiers()
+        {
+            Console.WriteLine($"{NameCountry} Squad:");
+            foreach (Soldier soldier in _soldiers)
+            {
+                Console.WriteLine($"  {soldier.Name} - Health: {soldier.Health}, Damage: {soldier.Damage}");
             }
         }
     }
 
     class Soldier
     {
-        private List<SoldierFactory> _soldiers = new List<SoldierFactory>();
-
         public Soldier(int health, int damage, string name)
         {
             Health = health;
@@ -90,9 +166,9 @@ namespace HomeWork2
             Name = name;
         }
 
-        public int Health { get; set; }
-        public int Damage { get; protected set; }
-        public string Name { get; protected set; }
+        public int Health { get; private set; }
+        public int Damage { get; private set; }
+        public string Name { get; private set; }
         public bool isAlive => Health > 0;
 
         public virtual int TakeDamage(int damage)
@@ -100,7 +176,7 @@ namespace HomeWork2
             if (isAlive)
             {
                 Health -= damage;
-                return Damage;
+                return damage;
             }
 
             return 0;
@@ -109,140 +185,21 @@ namespace HomeWork2
 
     class SoldierFactory
     {
-        private List<Soldier> _soldiers = new List<Soldier>();
+        private static int _nextSoldierId = 1;
 
-        public List<Soldier> CreateMedic()
+        public Soldier CreateRandomSoldier()
         {
-            int swordsmanCount = 5;
+            int minHealth = 500;
+            int maxHealth = 1000;
 
-            int minDamage = 5;
-            int maxDamage = 80;
+            int minDamage = 50;
+            int maxDamage = 100;
 
-            int maxHealth = 800;
-
-            string name = "Swordsman";
-
+            int health = RandomGenerator.Next(minHealth, maxHealth);
             int damage = RandomGenerator.Next(minDamage, maxDamage);
-            int health = RandomGenerator.Next(maxHealth);
-            int SwordsmanSkill = RandomGenerator.Next(swordsmanCount);
-
-            _soldiers.Add(new Swordsman(health, damage, swordsmanCount, name));
-
-            return _soldiers;
-        }
-
-        public List<Soldier> CreateArcher()
-        {
-            int archerCount = 5;
-
-            int minDamage = 10;
-            int maxDamage = 90;
-
-            int maxHealth = 900;
-
-            string name = "Archer";
-
-            int damage = RandomGenerator.Next(minDamage, maxDamage);
-            int health = RandomGenerator.Next(maxHealth);
-            int archerSkill = RandomGenerator.Next(archerCount);
-
-            _soldiers.Add(new Archer(health, damage, archerCount, name));
-
-            return _soldiers;
-        }
-    }
-
-    class Squad
-    {
-        private List<Soldier> _soldiers = new List<Soldier>();
-
-        private SoldierFactory _soldierFactory = new SoldierFactory();
-
-        private int _soldiersOutCoint = 0;
-
-        public Squad()
-        {
-            _soldiers.AddRange(_soldierFactory.CreateArcher());
-            _soldiers.AddRange(_soldierFactory.CreateMedic());
-        }
-
-        public int GetTotalHealth()
-        {
-            int totalHealth = 0;
-
-            foreach (Soldier soldier in _soldiers)
-                totalHealth += soldier.Health;
-
-            return totalHealth;
-        }
-
-        public void RemoveSoldiers()
-        {
-            List<Soldier> removeToSoldiers = new List<Soldier>();
-
-            foreach (Soldier soldiers in _soldiers)
-            {
-                if (!soldiers.isAlive)
-                {
-                    removeToSoldiers.Add(soldiers);
-                }
-            }
-
-            _soldiersOutCoint = removeToSoldiers.Count;
-
-            foreach (Soldier soldier in removeToSoldiers)
-            {
-                _soldiers.Remove(soldier);
-            }
-
-            Console.WriteLine($"Fallen soldiers: {removeToSoldiers.Count}. Remaining soldiers: {_soldiers.Count}.");
-
-        }
-
-        public void ShowSoldiers()
-        {
-            int soldierCount = 0;
-
-            foreach (Soldier soldier in _soldiers)
-            {
-                soldierCount++;
-                Console.WriteLine($"Health -- {soldier.Health}.\t" +
-                                  $"Attack -- {soldier.Damage}.\t" +
-                                  $"Name -- {soldier.Name}.\t");
-            }
-        }
-
-        public Soldier GetRandomSoldier()
-        {
-            if (_soldiers.Count == 0)
-            {
-                return null;
-            }
-
-            int index = RandomGenerator.Next(0, _soldiers.Count);
-            Soldier soldier = _soldiers[index];
-            _soldiers.RemoveAt(index);
-            return soldier;
-        }
-    }
-
-    class Swordsman : Soldier
-    {
-        public Swordsman(int health, int damage, int quanity, string name) : base(health, damage, name) { }
-
-        public override int TakeDamage(int damage)
-        {
-            return base.TakeDamage(damage);
-        }
-    }
-
-    class Archer : Soldier
-    {
-        public Archer(int health, int damage, int quanity, string name) : base(health, damage, name) { }
-
-        public override int TakeDamage(int damage)
-        {
-            return base.TakeDamage(damage);
+            string name = $"Soldier{_nextSoldierId}";
+            _nextSoldierId++;
+            return new Soldier(health, damage, name);
         }
     }
 }
