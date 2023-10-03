@@ -20,11 +20,6 @@ namespace HomeWork2
         private static Random s_random = new Random();
 
         public static int Next(int minimum, int maximum) => s_random.Next(minimum, maximum);
-
-        public static int Next(int maximum)
-        {
-            return s_random.Next(maximum);
-        }
     }
 
     class Battlefield
@@ -34,7 +29,7 @@ namespace HomeWork2
 
         public void Field()
         {
-            while (!_squadOne.IsDefeated() && !_squadTwo.IsDefeated())
+            while (_squadOne.IsDefeated() == false && _squadTwo.IsDefeated() == false)
             {
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
@@ -72,13 +67,14 @@ namespace HomeWork2
     class Squad
     {
         private List<Soldier> _soldiers = new List<Soldier>();
-        public string NameCountry { get; private set; }
 
         public Squad(string nameCountry)
         {
             NameCountry = nameCountry;
             _soldiers.AddRange(CreateSoldiers());
         }
+
+        public string NameCountry { get; private set; }
 
         private List<Soldier> CreateSoldiers()
         {
@@ -97,19 +93,21 @@ namespace HomeWork2
 
         public bool IsDefeated()
         {
-            foreach (var soldier in _soldiers)
+            foreach (Soldier soldier in _soldiers)
             {
                 if (soldier.isAlive)
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
         public int Attack(Squad enemySquad)
         {
             int totalDamage = 0;
+
             foreach (Soldier soldier in _soldiers)
             {
                 if (soldier.isAlive)
@@ -119,6 +117,7 @@ namespace HomeWork2
                     totalDamage += damage;
                 }
             }
+
             return totalDamage;
         }
 
@@ -144,12 +143,14 @@ namespace HomeWork2
                     aliveSoldiers.Add(soldier);
                 }
             }
+
             _soldiers = aliveSoldiers;
         }
 
         public void ShowSoldiers()
         {
             Console.WriteLine($"{NameCountry} Squad:");
+
             foreach (Soldier soldier in _soldiers)
             {
                 Console.WriteLine($"  {soldier.Name} - Health: {soldier.Health}, Damage: {soldier.Damage}");
