@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq;
 
 namespace HomeWork2
 {
@@ -26,11 +24,11 @@ namespace HomeWork2
 
     class Battlefield
     {
-        private static Squad _squadOne = new Squad("Country One");
-        private static Squad _squadTwo = new Squad("Country Two");
+        private Squad _squadOne = new Squad("Country One");
+        private Squad _squadTwo = new Squad("Country Two");
 
-        private static Soldier _firstCountry;
-        private static Soldier _secondCountry;
+        private Soldier _firstCountry;
+        private Soldier _secondCountry;
 
         public void Field()
         {
@@ -47,7 +45,7 @@ namespace HomeWork2
 
                 _firstCountry.UsesSpecialAttack(_secondCountry);
                 _secondCountry.UsesSpecialAttack(_firstCountry);
-                
+
                 _squadOne.RemoveDefeatedSoldiers();
                 _squadTwo.RemoveDefeatedSoldiers();
             }
@@ -131,7 +129,7 @@ namespace HomeWork2
             }
         }
 
-        public List<Soldier> CreateSoldiers()
+        private List<Soldier> CreateSoldiers()
         {
             List<Soldier> soldiers = new List<Soldier>();
 
