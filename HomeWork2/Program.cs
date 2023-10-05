@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Linq;
 
 namespace HomeWork2
 {
@@ -11,7 +13,7 @@ namespace HomeWork2
 
             battlefield.Field();
 
-            Console.ReadLine();
+            Console.ReadKey();
         }
     }
 
@@ -24,22 +26,28 @@ namespace HomeWork2
 
     class Battlefield
     {
-        private Squad _squadOne = new Squad("Country One");
-        private Squad _squadTwo = new Squad("Country Two");
+        private static Squad _squadOne = new Squad("Country One");
+        private static Squad _squadTwo = new Squad("Country Two");
+
+        private static Soldier _firstCountry;
+        private static Soldier _secondCountry;
 
         public void Field()
         {
             while (_squadOne.IsDefeated() == false && _squadTwo.IsDefeated() == false)
             {
+                _firstCountry = _squadOne.GetRandomSoldiers();
+                _secondCountry = _squadTwo.GetRandomSoldiers();
+
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
 
-                int damageByFirstSquad = _squadOne.Attack(_squadTwo);
-                int damageBySecondSquad = _squadTwo.Attack(_squadOne);
+                _firstCountry.TakeDamage(_secondCountry.Damage);
+                _secondCountry.TakeDamage(_firstCountry.Damage);
 
-                Console.WriteLine($"First Squad dealt {damageByFirstSquad} damage.");
-                Console.WriteLine($"Second Squad dealt {damageBySecondSquad} damage.");
-
+                _firstCountry.UsesSpecialAttack(_secondCountry);
+                _secondCountry.UsesSpecialAttack(_firstCountry);
+                
                 _squadOne.RemoveDefeatedSoldiers();
                 _squadTwo.RemoveDefeatedSoldiers();
             }
@@ -76,21 +84,6 @@ namespace HomeWork2
 
         public string NameCountry { get; private set; }
 
-        private List<Soldier> CreateSoldiers()
-        {
-            SoldierFactory factory = new SoldierFactory();
-            List<Soldier> soldiers = new List<Soldier>();
-
-            int squadSize = 5;
-
-            for (int i = 0; i < squadSize; i++)
-            {
-                soldiers.Add(factory.CreateRandomSoldier());
-            }
-
-            return soldiers;
-        }
-
         public bool IsDefeated()
         {
             foreach (Soldier soldier in _soldiers)
@@ -104,32 +97,13 @@ namespace HomeWork2
             return true;
         }
 
-        public int Attack(Squad enemySquad)
+        public Soldier GetRandomSoldiers()
         {
-            int totalDamage = 0;
+            int randomIndex = RandomGenerator.Next(0, _soldiers.Count);
 
-            foreach (Soldier soldier in _soldiers)
-            {
-                if (soldier.isAlive)
-                {
-                    int damage = RandomGenerator.Next(1, soldier.Damage);
-                    enemySquad.TakeDamage(damage);
-                    totalDamage += damage;
-                }
-            }
+            Soldier randomSoldiers = _soldiers[randomIndex];
 
-            return totalDamage;
-        }
-
-        public void TakeDamage(int damage)
-        {
-            foreach (Soldier soldier in _soldiers)
-            {
-                if (soldier.isAlive)
-                {
-                    soldier.TakeDamage(damage);
-                }
-            }
+            return randomSoldiers;
         }
 
         public void RemoveDefeatedSoldiers()
@@ -156,10 +130,31 @@ namespace HomeWork2
                 Console.WriteLine($"  {soldier.Name} - Health: {soldier.Health}, Damage: {soldier.Damage}");
             }
         }
+
+        public List<Soldier> CreateSoldiers()
+        {
+            List<Soldier> soldiers = new List<Soldier>();
+
+            int minHealth = 0;
+            int maxHealth = 100;
+
+            int minDamage = 40;
+            int maxDamage = 60;
+
+            int health = RandomGenerator.Next(minHealth, maxHealth);
+            int damage = RandomGenerator.Next(minDamage, maxDamage);
+
+            soldiers.Add(new Archer(health, damage, "Archer"));
+            soldiers.Add(new Swordsman(health, damage, "Swordsman"));
+
+            return soldiers;
+        }
     }
 
     class Soldier
     {
+        private List<Soldier> _soldiers = new List<Soldier>();
+
         public Soldier(int health, int damage, string name)
         {
             Health = health;
@@ -167,40 +162,85 @@ namespace HomeWork2
             Name = name;
         }
 
-        public int Health { get; private set; }
-        public int Damage { get; private set; }
-        public string Name { get; private set; }
+        public int Health { get; protected set; }
+        public int Damage { get; protected set; }
+        public string Name { get; protected set; }
         public bool isAlive => Health > 0;
 
         public virtual int TakeDamage(int damage)
         {
             if (isAlive)
-            {
                 Health -= damage;
-                return damage;
+
+            return Damage;
+        }
+
+        public virtual int UsesSpecialAttack(Soldier enemy)
+        {
+            int totalDamage = 0;
+
+            foreach (Soldier soldiers in _soldiers)
+            {
+                int damage = UsesSpecialAttack(enemy);
+                totalDamage += damage;
+                enemy.TakeDamage(damage);
             }
 
-            return 0;
+            return totalDamage;
         }
     }
 
-    class SoldierFactory
+    class Swordsman : Soldier
     {
-        private static int _nextSoldierId = 1;
+        private List<Soldier> _soldiers = new List<Soldier>();
 
-        public Soldier CreateRandomSoldier()
+        public Swordsman(int health, int damage, string name) : base(health, damage, name)
         {
-            int minHealth = 500;
-            int maxHealth = 1000;
+            GhostOfMoon = 49;
+        }
 
-            int minDamage = 50;
-            int maxDamage = 100;
+        public int GhostOfMoon { get; protected set; }
 
-            int health = RandomGenerator.Next(minHealth, maxHealth);
-            int damage = RandomGenerator.Next(minDamage, maxDamage);
-            string name = $"Soldier{_nextSoldierId}";
-            _nextSoldierId++;
-            return new Soldier(health, damage, name);
+        public override int UsesSpecialAttack(Soldier enemy)
+        {
+            int totalDamage = 0;
+
+            foreach (Soldier soldiers in _soldiers)
+            {
+                GhostOfMoon = UsesSpecialAttack(enemy);
+                totalDamage += GhostOfMoon;
+                enemy.TakeDamage(GhostOfMoon);
+            }
+
+            Console.WriteLine($"Swordsman uses attack - {GhostOfMoon}.");
+            return totalDamage;
+        }
+    }
+
+    class Archer : Soldier
+    {
+        private List<Soldier> _soldires = new List<Soldier>();
+
+        public Archer(int health, int damage, string name) : base(health, damage, name)
+        {
+            FlamingArrow = 59;
+        }
+
+        public int FlamingArrow { get; protected set; }
+
+        public override int UsesSpecialAttack(Soldier enemy)
+        {
+            int totalDamage = 0;
+
+            foreach (Soldier soldiers in _soldires)
+            {
+                FlamingArrow = UsesSpecialAttack(enemy);
+                totalDamage += FlamingArrow;
+                enemy.TakeDamage(FlamingArrow);
+            }
+
+            Console.WriteLine($"Archer uses attack - {FlamingArrow}.");
+            return totalDamage;
         }
     }
 }
