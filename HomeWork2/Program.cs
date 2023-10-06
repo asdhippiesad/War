@@ -7,9 +7,9 @@ namespace HomeWork2
     {
         static void Main(string[] args)
         {
-            Battlefield battlefield = new Battlefield();
+            War battlefield = new War();
 
-            battlefield.Field();
+            battlefield.Fight();
 
             Console.ReadKey();
         }
@@ -22,29 +22,29 @@ namespace HomeWork2
         public static int Next(int minimum, int maximum) => s_random.Next(minimum, maximum);
     }
 
-    class Battlefield
+    class War
     {
         private Squad _squadOne = new Squad("Country One");
         private Squad _squadTwo = new Squad("Country Two");
 
-        private Soldier _firstCountry;
-        private Soldier _secondCountry;
+        private Soldier _firstSoldier;
+        private Soldier _secondSoldier;
 
-        public void Field()
+        public void Fight()
         {
             while (_squadOne.IsDefeated() == false && _squadTwo.IsDefeated() == false)
             {
-                _firstCountry = _squadOne.GetRandomSoldiers();
-                _secondCountry = _squadTwo.GetRandomSoldiers();
+                _firstSoldier = _squadOne.GetRandomSoldiers();
+                _secondSoldier = _squadTwo.GetRandomSoldiers();
 
                 _squadOne.ShowSoldiers();
                 _squadTwo.ShowSoldiers();
 
-                _firstCountry.TakeDamage(_secondCountry.Damage);
-                _secondCountry.TakeDamage(_firstCountry.Damage);
+                _firstSoldier.TakeDamage(_secondSoldier.Damage);
+                _secondSoldier.TakeDamage(_firstSoldier.Damage);
 
-                _firstCountry.UsesSpecialAttack(_secondCountry);
-                _secondCountry.UsesSpecialAttack(_firstCountry);
+                _firstSoldier.UsesSpecialAttack(_secondSoldier);
+                _secondSoldier.UsesSpecialAttack(_firstSoldier);
 
                 _squadOne.RemoveDefeatedSoldiers();
                 _squadTwo.RemoveDefeatedSoldiers();
@@ -86,7 +86,7 @@ namespace HomeWork2
         {
             foreach (Soldier soldier in _soldiers)
             {
-                if (soldier.isAlive)
+                if (soldier.IsAlive)
                 {
                     return false;
                 }
@@ -110,7 +110,7 @@ namespace HomeWork2
 
             foreach (Soldier soldier in _soldiers)
             {
-                if (soldier.isAlive)
+                if (soldier.IsAlive)
                 {
                     aliveSoldiers.Add(soldier);
                 }
@@ -151,8 +151,6 @@ namespace HomeWork2
 
     class Soldier
     {
-        private List<Soldier> _soldiers = new List<Soldier>();
-
         public Soldier(int health, int damage, string name)
         {
             Health = health;
@@ -163,11 +161,11 @@ namespace HomeWork2
         public int Health { get; protected set; }
         public int Damage { get; protected set; }
         public string Name { get; protected set; }
-        public bool isAlive => Health > 0;
+        public bool IsAlive => Health > 0;
 
         public virtual int TakeDamage(int damage)
         {
-            if (isAlive)
+            if (IsAlive)
                 Health -= damage;
 
             return Damage;
@@ -175,16 +173,9 @@ namespace HomeWork2
 
         public virtual int UsesSpecialAttack(Soldier enemy)
         {
-            int totalDamage = 0;
+            enemy.TakeDamage(Damage);
 
-            foreach (Soldier soldiers in _soldiers)
-            {
-                int damage = UsesSpecialAttack(enemy);
-                totalDamage += damage;
-                enemy.TakeDamage(damage);
-            }
-
-            return totalDamage;
+            return Damage;
         }
     }
 
@@ -192,9 +183,12 @@ namespace HomeWork2
     {
         private List<Soldier> _soldiers = new List<Soldier>();
 
+        private int _minDamage = 15;
+        private int _maxDamage = 54;
+
         public Swordsman(int health, int damage, string name) : base(health, damage, name)
         {
-            GhostOfMoon = 49;
+            GhostOfMoon = RandomGenerator.Next(_minDamage, _maxDamage);
         }
 
         public int GhostOfMoon { get; protected set; }
@@ -219,9 +213,12 @@ namespace HomeWork2
     {
         private List<Soldier> _soldires = new List<Soldier>();
 
+        private int _minDamage = 10;
+        private int _maxDamage = 50;
+
         public Archer(int health, int damage, string name) : base(health, damage, name)
         {
-            FlamingArrow = 59;
+            FlamingArrow = RandomGenerator.Next(_minDamage, _maxDamage);
         }
 
         public int FlamingArrow { get; protected set; }
